@@ -36,6 +36,7 @@ class MainWindow(qtw.QWidget):
 
         self.show()
 
+    @qtc.pyqtSlot()
     def onChange(self):
         self.formwindow = FormWindow()
         self.formwindow.submitted.connect(self.label.setText)
