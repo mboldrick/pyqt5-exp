@@ -53,7 +53,7 @@ class CsvTableModel(qtc.QAbstractTableModel):
 
     def insertRows(self, position, rows, parent):
         self.beginInsertRows(
-            parent or qtc.QModelndex(),
+            parent or qtc.QModelIndex(),
             position,
             position + rows - 1,
         )
@@ -72,15 +72,67 @@ class CsvTableModel(qtc.QAbstractTableModel):
             del self._data[position]
         self.endRemoveRows()
 
+    def save_data(self):
+        with open(self.filename, "w", encodeing="utf-8") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(self._headers)
+            writer.writerows(self._data)
+
 
 class MainWindow(qtw.QMainWindow):
     def __init__(self):
         """MainWindow constructor"""
         super().__init__()
         # Main UI code goes here
+        self.tableview = qtw.QTableView()
+        self.tableview.setSortingEnabled(True)
+        self.setCentralWidget(self.tableview)
 
+        menu = self.menuBar()
+        file_menu = menu.addMenu("File")
+        file_menu.addAction("Open…", self.select_file)
+        file_menu.addAction("Save", self.save_file)
+
+        edit_menu = menu.addMenu("Edit")
+        edit_menu.addAction("Insert Row Above", self.insert_above)
+        edit_menu.addAction("Insert Row Below", self.insert_below)
+        edit_menu.addAction("Remove Rows", self.remove_rows)
         # End main UI code
         self.show()
+
+    def select_file(self):
+        filename, _ = qtw.QFileDialog.getOpenFileName(
+            self,
+            "Select a CSV file to open…",
+            qtc.QDir.homePath(),
+            "CSV Files (*.csv) ;; All Files (*)",
+        )
+        if filename:
+            self.model = CsvTableModel(filename)
+            self.tableview.setModel(self.model)
+            # self.tableview.resizeColumnsToContents()
+            # self.tableview.resizeRowsToContents()
+            # self.tableview.sortByColumn(0, qtc.Qt.AscendingOrder)
+            # self.model.dataChanged.connect(self.model.save_data)
+
+    def save_file(self):
+        if self.model:
+            self.model.save_data()
+
+    def insert_above(self):
+        selected = self.tableview.selectedIndexes()
+        row = selected[0].row() if selected else 0
+        self.model.insertRows(row, 1, None)
+
+    def insert_below(self):
+        selected = self.tableview.selectedIndexes()
+        row = selected[-1].row() if selected else self.model.rowCount(None)
+        self.model.insertRows(row + 1, 1, None)
+
+    def remove_rows(self):
+        selected = self.tableview.selectedIndexes()
+        if selected:
+            self.model.removeRows(selected[0].row(), len(selected), None)
 
 
 if __name__ == "__main__":
