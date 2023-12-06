@@ -6,15 +6,37 @@ from PyQt5 import QtSql as qts
 
 
 class CoffeeForm(qtw.QWidget):
+    """Form to display/edit all info about a coffee"""
+
     def __init__(self, coffees_model, reviews_model):
         super().__init__()
         self.setLayout(qtw.QFormLayout())
+
+        # Coffee Fields
         self.coffee_brand = qtw.QLineEdit()
         self.layout().addRow("Brand:", self.coffee_brand)
         self.coffee_name = qtw.QLineEdit()
         self.layout().addRow("Name:", self.coffee_name)
         self.roast = qtw.QComboBox()
         self.layout().addRow("Roast:", self.roast)
+
+        # Map the coffee fields
+        self.coffees_model = coffees_model
+        self.mapper = qtw.QDataWidgetMapper(self)
+        self.mapper.setModel(self.coffees_model)
+        self.mapper.setItemDelegate(qts.QSqlRelationalDelegate(self))
+        self.mapper.addMapping(
+            self.coffee_brand, coffees_model.fieldIndex("coffee_brand")
+        )
+        self.mapper.addMapping(
+            self.coffee_name, coffees_model.fieldIndex("coffee_name")
+        )
+        self.mapper.addMapping(self.roast, coffees_model.fieldIndex("description"))
+
+        # Retrieve a model for the roasts and set up the combobox
+        roasts_model = coffees_model.relationModel(self.coffees_ odel.fieldIndex("description"))
+        self.roast.setModel(roasts_model)
+        self.roast.setModelColumn(1)
 
 
 class MainWindow(qtw.QMainWindow):
